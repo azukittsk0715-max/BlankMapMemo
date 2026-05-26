@@ -10,6 +10,9 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
@@ -22,16 +25,14 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSION = 100;
 
     private MapView mapView;
-
     private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // osmdroid設定
         Configuration.getInstance().setUserAgentValue(getPackageName());
-
         setContentView(R.layout.activity_main);
 
         mapView = findViewById(R.id.map);
@@ -49,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
         );
 
         mapView.setTileSource(tileSource);
-
         mapView.setMultiTouchControls(true);
 
         fusedLocationClient =
@@ -70,46 +70,57 @@ public class MainActivity extends AppCompatActivity {
             );
 
         } else {
-
-            getCurrentLocation();
+            startLocationUpdates();
         }
     }
 
-    // 現在位置取得
-    private void getCurrentLocation() {
+    // リアルタイム位置更新（5秒ごと）
+    private void startLocationUpdates() {
 
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
             return;
         }
 
-        fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(location -> {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setInterval(5000); // 5秒
+        locationRequest.setFastestInterval(3000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-                    if (location != null) {
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult result) {
+                if (result == null) return;
 
-                        double lat = location.getLatitude();
-                        double lon = location.getLongitude();
+                for (android.location.Location location : result.getLocations()) {
 
-                        // 地図中心設定
-                        GeoPoint point = new GeoPoint(lat, lon);
+                    double lat = location.getLatitude();
+                    double lon = location.getLongitude();
 
-                        mapView.getController().setZoom(15.0);
-                        mapView.getController().setCenter(point);
+                    GeoPoint point = new GeoPoint(lat, lon);
 
-                        // マーカー追加
-                        Marker marker = new Marker(mapView);
+                    mapView.getController().setZoom(15.0);
+                    mapView.getController().setCenter(point);
 
-                        marker.setPosition(point);
-                        marker.setTitle("現在地");
+                    // マーカー更新（増え続け防止）
+                    mapView.getOverlays().clear();
 
-                        mapView.getOverlays().add(marker);
+                    Marker marker = new Marker(mapView);
+                    marker.setPosition(point);
+                    marker.setTitle("現在地");
 
-                    }
-                });
+                    mapView.getOverlays().add(marker);
+                }
+            }
+        };
+
+        fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                getMainLooper()
+        );
     }
 
     // 権限許可後
@@ -131,20 +142,9 @@ public class MainActivity extends AppCompatActivity {
                     && grantResults[0]
                     == PackageManager.PERMISSION_GRANTED) {
 
-                getCurrentLocation();
+                startLocationUpdates();
             }
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mapView.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mapView.onPause();
-    }
 }
