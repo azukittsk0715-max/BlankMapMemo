@@ -15,16 +15,15 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
 
 import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.XYTileSource;
-import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.Marker;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSION = 100;
 
     private MapView mapView;
+    private MapViewController mapController;
+
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
 
@@ -37,25 +36,14 @@ public class MainActivity extends AppCompatActivity {
 
         mapView = findViewById(R.id.map);
 
-        // 国土地理院タイル
-        XYTileSource tileSource = new XYTileSource(
-                "GSI",
-                5,
-                18,
-                256,
-                ".png",
-                new String[]{
-                        "https://cyberjapandata.gsi.go.jp/xyz/std/"
-                }
-        );
-
-        mapView.setTileSource(tileSource);
-        mapView.setMultiTouchControls(true);
+        // ✅ Controllerを使う
+        mapController = new MapViewController(mapView);
+        mapController.initMap();
 
         fusedLocationClient =
                 LocationServices.getFusedLocationProviderClient(this);
 
-        // 権限確認
+        // 権限チェック
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -74,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // リアルタイム位置更新（5秒ごと）
+    // ✅ 位置更新（Controllerに任せる）
     private void startLocationUpdates() {
 
         if (ActivityCompat.checkSelfPermission(
@@ -85,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setInterval(5000); // 5秒
+        locationRequest.setInterval(5000);
         locationRequest.setFastestInterval(3000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
@@ -99,19 +87,8 @@ public class MainActivity extends AppCompatActivity {
                     double lat = location.getLatitude();
                     double lon = location.getLongitude();
 
-                    GeoPoint point = new GeoPoint(lat, lon);
-
-                    mapView.getController().setZoom(15.0);
-                    mapView.getController().setCenter(point);
-
-                    // マーカー更新（増え続け防止）
-                    mapView.getOverlays().clear();
-
-                    Marker marker = new Marker(mapView);
-                    marker.setPosition(point);
-                    marker.setTitle("現在地");
-
-                    mapView.getOverlays().add(marker);
+                    // ✅ 地図処理は全部Controllerへ
+                    mapController.updateLocation(lat, lon);
                 }
             }
         };
@@ -123,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    // 権限許可後
+    // 権限結果
     @Override
     public void onRequestPermissionsResult(
             int requestCode,
@@ -146,5 +123,4 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 }

@@ -8,6 +8,7 @@ import org.osmdroid.views.overlay.Marker;
 public class MapViewController {
 
     private MapView mapView;
+    boolean isFirstUpdate=true;
 
     public MapViewController(MapView mapView) {
         this.mapView = mapView;
@@ -34,8 +35,11 @@ public class MapViewController {
 
         GeoPoint point = new GeoPoint(lat, lon);
 
-        mapView.getController().setZoom(15.0);
-        mapView.getController().setCenter(point);
+        if (isFirstUpdate) {
+            mapView.getController().setZoom(15.0);
+            mapView.getController().setCenter(point);
+            isFirstUpdate=false;
+        }
 
         // マーカー更新
         mapView.getOverlays().clear();
