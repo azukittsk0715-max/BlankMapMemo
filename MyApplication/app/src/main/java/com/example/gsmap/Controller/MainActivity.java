@@ -8,12 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationResult;
-
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
@@ -23,9 +17,7 @@ public class MainActivity extends AppCompatActivity {
 
     private MapView mapView;
     private MapViewController mapController;
-
-    private FusedLocationProviderClient fusedLocationClient;
-    private LocationCallback locationCallback;
+    private LocationModel locationModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,14 +28,14 @@ public class MainActivity extends AppCompatActivity {
 
         mapView = findViewById(R.id.map);
 
-        // ✅ Controllerを使う
+        // ✅ 地図Controller初期化
         mapController = new MapViewController(mapView);
         mapController.initMap();
 
-        fusedLocationClient =
-                LocationServices.getFusedLocationProviderClient(this);
+        // ✅ 位置Model初期化
+        locationModel = new LocationModel();
 
-        // 権限チェック
+        // ✅ 権限チェック
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -58,49 +50,18 @@ public class MainActivity extends AppCompatActivity {
             );
 
         } else {
-            startLocationUpdates();
+            startLocation();
         }
     }
 
-    // ✅ 位置更新（Controllerに任せる）
-    private void startLocationUpdates() {
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(3000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult result) {
-                if (result == null) return;
-
-                for (android.location.Location location : result.getLocations()) {
-
-                    double lat = location.getLatitude();
-                    double lon = location.getLongitude();
-
-                    // ✅ 地図処理は全部Controllerへ
-                    mapController.updateLocation(lat, lon);
-                }
-            }
-        };
-
-        fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                getMainLooper()
-        );
+    // ✅ LocationModel開始
+    private void startLocation() {
+        locationModel.start(this, (lat, lon) -> {
+            mapController.updateLocation(lat, lon);
+        });
     }
 
-    // 権限結果
+    // ✅ 権限結果
     @Override
     public void onRequestPermissionsResult(
             int requestCode,
@@ -114,12 +75,11 @@ public class MainActivity extends AppCompatActivity {
         );
 
         if (requestCode == REQUEST_PERMISSION) {
-
             if (grantResults.length > 0
                     && grantResults[0]
                     == PackageManager.PERMISSION_GRANTED) {
 
-                startLocationUpdates();
+                startLocation();
             }
         }
     }
