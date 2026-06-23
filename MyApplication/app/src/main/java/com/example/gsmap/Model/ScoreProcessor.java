@@ -1,93 +1,128 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ScoreProcessor{
-    public ScoreInfo getScore(String walker_id){
-        /* C8スコア情報管理部からスコアを受け取る */
-        ScoreInfo scoreinfo = null;
-        if(scoreinfo != null){
-            /* M3スコア計算へスコアを渡す */
-            return scoreinfo;//後で
-        }else{
-            return null; /* error */
+public class ScoreProcessor {
+
+    // TODO: スコア計算式は仕様確定後に変更する。
+    // 現在は10mにつき1点として計算する。
+    private static final double METERS_PER_POINT = 10.0;
+
+    // 地球の半径(m)
+    private static final double EARTH_RADIUS = 6378137.0;
+
+    /**
+     * C5-M1 スコア取得
+     * C8 スコア情報管理部からスコアを受け取る想定。
+     * 現段階ではC8未実装のため、仮で0点のScoreInfoを返す。
+     */
+    public ScoreInfo getScore(String walker_id) {
+        if (walker_id == null || walker_id.isEmpty()) {
+            return null;
         }
+
+        // TODO: C8 スコア情報管理部と接続後、DB/APIから取得した値に置き換える。
+        return new ScoreInfo(walker_id, 0);
     }
 
-    public List<RoutePoint> getPath(String walker_id){
-        /* C7 移動経路情報管理部から移動経路情報を取得してM3 スコア計算へ渡す */
-        List<RoutePoint> list = new ArrayList<>();
-        return list;//後で
+    /**
+     * C5-M2 移動経路取得
+     * C7 移動経路情報管理部から移動経路情報を取得する想定。
+     * 現段階ではC7未実装のため、空のリストを返す。
+     */
+    public List<RoutePoint> getPath(String walker_id) {
+        if (walker_id == null || walker_id.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // TODO: C7 移動経路情報管理部と接続後、DB/APIから取得した経路に置き換える。
+        return new ArrayList<>();
     }
 
-//    public double calculateDistance(RoutePoint previous, RoutePoint current){
-//        /*地球の半径(m)*/
-//        double EARTH_RAD = 6378137.0;
-//
-//        double x1 = previous.longitude * Math.PI / 180;
-//        double y1 = previous.latitude * Math.PI / 180;
-//        double x2 = current.longitude * Math.PI / 180;
-//        double y2 = current.latitude * Math.PI / 180;
-//
-//        return EARTH_RAD * Math.acos(Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1));
-//    }
-
+    /**
+     * C5-M3 スコア計算の補助処理。
+     * 2地点間の距離をHaversine式で計算する。
+     *
+     * @param previous 前の地点
+     * @param current  現在の地点
+     * @return 2地点間の距離(m)
+     */
     public double calculateDistance(RoutePoint previous, RoutePoint current) {
         if (previous == null || current == null) {
             return 0.0;
         }
 
-        // 地球の半径(m)
-        final double EARTH_RADIUS = 6378137.0;
+        double lat1 = Math.toRadians(previous.getLatitude());
+        double lon1 = Math.toRadians(previous.getLongitude());
+        double lat2 = Math.toRadians(current.getLatitude());
+        double lon2 = Math.toRadians(current.getLongitude());
 
-        // 緯度・経度をラジアンに変換
-        double lat1 = Math.toRadians(previous.latitude);
-        double lon1 = Math.toRadians(previous.longitude);
-        double lat2 = Math.toRadians(current.latitude);
-        double lon2 = Math.toRadians(current.longitude);
-
-        // 緯度差・経度差
         double dLat = lat2 - lat1;
         double dLon = lon2 - lon1;
 
-        // Haversine式
+        double sinLat = Math.sin(dLat / 2.0);
+        double sinLon = Math.sin(dLon / 2.0);
+
         double a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                sinLat * sinLat
                         + Math.cos(lat1) * Math.cos(lat2)
-                        * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                        * sinLon * sinLon;
 
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        // 浮動小数点誤差対策
+        a = Math.max(0.0, Math.min(1.0, a));
 
-        // 2点間距離(m)
+        double c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a));
+
         return EARTH_RADIUS * c;
     }
 
-    public double calculateTotalDistance(List<RoutePoint> path){
-        double distance = 0, totaldistance = 0;
-        RoutePoint previous, current;
-
-        for(int i=1;i<path.size();i++){
-            previous = path.get(i-1);
-            current = path.get(i);
-            distance = calculateDistance(previous, current);
-            totaldistance = totaldistance + distance;
+    /**
+     * C5-M3 スコア計算の補助処理。
+     * 移動経路リスト内の隣り合う地点間距離を合計する。
+     *
+     * @param path 移動経路
+     * @return 累計移動距離(m)
+     */
+    public double calculateTotalDistance(List<RoutePoint> path) {
+        if (path == null || path.size() < 2) {
+            return 0.0;
         }
-        return totaldistance;
+
+        double totalDistance = 0.0;
+
+        for (int i = 1; i < path.size(); i++) {
+            RoutePoint previous = path.get(i - 1);
+            RoutePoint current = path.get(i);
+
+            double distance = calculateDistance(previous, current);
+            totalDistance += distance;
+        }
+
+        return totalDistance;
     }
 
-    public int calcScore(ScoreInfo scoreinfo, List<RoutePoint> path){
-        if(scoreinfo == null){
+    /**
+     * C5-M3 スコア計算。
+     * 既存スコアと移動経路情報から新しいスコアを計算する。
+     *
+     * @param scoreInfo 現在のスコア情報
+     * @param path      移動経路情報
+     * @return 新しいスコア。エラー時は-1。
+     */
+    public int calcScore(ScoreInfo scoreInfo, List<RoutePoint> path) {
+        if (scoreInfo == null || scoreInfo.getScore() == null) {
             return -1;
         }
 
-        int currentscore = scoreinfo.score;
-        if(path == null){
-            return currentscore;
+        int currentScore = scoreInfo.getScore();
+
+        if (path == null || path.size() < 2) {
+            return currentScore;
         }
 
-        double totaldistance = calculateTotalDistance(path);
+        double totalDistance = calculateTotalDistance(path);
 
-        // TODO: スコア計算式は仕様確定後に変更する。現在は10mにつき1点
-        int addscore = (int)(totaldistance / 10);
-        int newscore = currentscore + addscore;
-        return newscore;
+        int addScore = (int) (totalDistance / METERS_PER_POINT);
+
+        return currentScore + addScore;
     }
 }
