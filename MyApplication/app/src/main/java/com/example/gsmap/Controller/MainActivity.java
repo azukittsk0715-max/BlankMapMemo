@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ===== 認証APIテスト用メソッド（動作確認が済んだら削除）=====
-    private void testAuthApi() {
+    private void testAuthAfrgrgrpi() {
         new Thread(() -> {
             com.example.gsmap.Model.WalkerModel walkerModel =
                     new com.example.gsmap.Model.WalkerModel();
