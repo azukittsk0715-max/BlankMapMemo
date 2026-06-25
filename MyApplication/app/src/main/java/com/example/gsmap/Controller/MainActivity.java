@@ -11,6 +11,9 @@ import androidx.core.app.ActivityCompat;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
+import com.example.gsmap.Controller.AuthController;
+import android.util.Log;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSION = 100;
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         // ===== 認証APIテスト（動作確認用・あとで消す）=====
         testAuthApi();
+        testAuthController();
 
     }
 
@@ -82,6 +86,25 @@ public class MainActivity extends AppCompatActivity {
             // テスト③：間違ったパスワードでログイン（失敗するはず）
             boolean loginNg = walkerModel.verifyPassword("apptest", "wrongpass");
             android.util.Log.d("AUTH_TEST", "ログイン(間違いPW): " + loginNg);
+        }).start();
+    }
+
+    // C2 AuthControllerのテスト
+    private void testAuthController() {
+        new Thread(() -> {
+            AuthController authController = new AuthController();
+
+            // 新規登録テスト
+            int registerResult = authController.RegisterUser("ctrltest", "ctrlpass");
+            Log.d("CTRL_TEST", "登録結果: " + registerResult);
+
+            // 正しいPWでログインテスト
+            int loginOk = authController.AuthenticateUser("ctrltest", "ctrlpass");
+            Log.d("CTRL_TEST", "ログイン(正しいPW): " + loginOk);
+
+            // 間違ったPWでログインテスト
+            int loginNg = authController.AuthenticateUser("ctrltest", "wrongpass");
+            Log.d("CTRL_TEST", "ログイン(間違いPW): " + loginNg);
         }).start();
     }
 
