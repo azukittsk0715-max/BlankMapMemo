@@ -12,7 +12,8 @@
         android:allowBackup="true"
         android:label="GSI Map"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"

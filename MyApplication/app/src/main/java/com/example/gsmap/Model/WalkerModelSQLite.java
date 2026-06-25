@@ -28,7 +28,7 @@ public class WalkerModelSQLite extends SQLiteOpenHelper {
     private static final String COL_PASSWORD = "password";
 
     // コンストラクタ（このクラスが作られるとき最初に呼ばれる）
-    public WalkerModel(Context context) {
+    public WalkerModelSQLite(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
