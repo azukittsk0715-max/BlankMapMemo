@@ -20,12 +20,18 @@ public class LocationModel {
     public interface LocationListener {
         void onLocationChanged(double lat, double lon);
     }
+    public void stop() {
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+        }
+    }
 
     public void start(Context context, LocationListener listener) {
 
         fusedLocationClient =
                 LocationServices.getFusedLocationProviderClient(context);
 
+        //権限確認
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION

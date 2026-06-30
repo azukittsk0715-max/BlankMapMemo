@@ -15,7 +15,7 @@
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
 
         <activity
-            android:name=".MainActivity"
+            android:name="MainActivity"
             android:exported="true">
 
             <intent-filter>
@@ -25,6 +25,9 @@
             </intent-filter>
 
         </activity>
+
+        <activity
+            android:name=".Controller.SecondActivity" />
 
     </application>
 
