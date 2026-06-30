@@ -15,16 +15,22 @@
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         android:usesCleartextTraffic="true">
 
+        <!-- ログイン画面：アプリ起動時に最初に開く画面 -->
         <activity
-            android:name=".MainActivity"
+            android:name=".Controller.LoginActivity"
             android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
+        </activity>
+
+        <!-- ホーム画面（地図画面）：ログイン成功後に遷移する画面 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false">
         </activity>
 
     </application>
