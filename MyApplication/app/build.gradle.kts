@@ -29,4 +29,8 @@ dependencies {
 
     // osmdroid
     implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // JSON（API通信で使う）
+    implementation("org.json:json:20240303")
+
 }
