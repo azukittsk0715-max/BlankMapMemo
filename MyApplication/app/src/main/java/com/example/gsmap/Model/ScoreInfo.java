@@ -1,3 +1,5 @@
+package com.example.gsmap.Model;
+
 public class ScoreInfo {
     private String walker_id;
     private Integer score;
