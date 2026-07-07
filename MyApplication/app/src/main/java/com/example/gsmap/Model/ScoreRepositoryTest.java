@@ -1,3 +1,5 @@
+package com.example.gsmap.Model;
+
 public class ScoreRepositoryTest {
     public static void main(String[] args) throws Exception {
         String url = System.getenv("DB_URL");

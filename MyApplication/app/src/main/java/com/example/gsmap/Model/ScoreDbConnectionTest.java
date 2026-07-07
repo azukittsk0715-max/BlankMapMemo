@@ -1,3 +1,5 @@
+package com.example.gsmap.Model;
+
 import java.util.ArrayList;
 import java.util.List;
 
