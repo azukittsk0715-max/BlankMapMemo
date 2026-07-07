@@ -67,7 +67,7 @@ public class MapViewController {
         Polygon circle = new Polygon();
         circle.setPoints(Polygon.pointsAsCircle(
                 new GeoPoint(lat, lon),
-                15 // 半径15メートル
+                30 // 半径30メートル
         ));
         circle.getFillPaint().setColor(0x552196F3); // 半透明の青
         circle.getOutlinePaint().setStrokeWidth(0f); // 枠線なし
