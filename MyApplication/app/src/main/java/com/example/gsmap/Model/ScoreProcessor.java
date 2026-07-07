@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScoreProcessor {
-
-    // TODO: スコア計算式は仕様確定後に変更する。
     // 現在は10mにつき1点として計算する。
     private static final double METERS_PER_POINT = 10.0;
 

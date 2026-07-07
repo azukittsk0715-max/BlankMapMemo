@@ -13,6 +13,9 @@ import androidx.core.app.ActivityCompat;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
+import com.example.gsmap.R;
+import com.example.gsmap.View.MapViewController;
+import com.example.gsmap.Model.LocationModel;
 import com.example.gsmap.Controller.SecondActivity;
 import com.example.gsmap.Controller.AuthController;
 import android.util.Log;

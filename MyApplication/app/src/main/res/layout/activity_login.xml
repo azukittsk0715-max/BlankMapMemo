@@ -32,6 +32,16 @@
         android:hint="パスワード"
         android:maxLength="16"
         android:inputType="textPassword"
+        android:layout_marginBottom="8dp" />
+
+    <!-- パスワード確認欄（新規登録時のみ使用） -->
+    <EditText
+        android:id="@+id/editPasswordConfirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="パスワード（確認用・新規登録時のみ入力）"
+        android:maxLength="16"
+        android:inputType="textPassword"
         android:layout_marginBottom="24dp" />
 
     <!-- ログインボタン -->
@@ -54,7 +64,6 @@
         android:id="@+id/textMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#FF0000"
         android:layout_marginTop="24dp" />
 
 </LinearLayout>

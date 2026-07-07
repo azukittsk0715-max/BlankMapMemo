@@ -6,13 +6,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.gsmap.MainActivity;
+import androidx.core.content.ContextCompat;
 import com.example.gsmap.R;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText editWalkerId;
     private EditText editPassword;
+    private EditText editPasswordConfirm;
     private Button btnLogin;
     private Button btnRegister;
     private TextView textMessage;
@@ -26,6 +27,7 @@ public class LoginActivity extends AppCompatActivity {
 
         editWalkerId = findViewById(R.id.editWalkerId);
         editPassword = findViewById(R.id.editPassword);
+        editPasswordConfirm = findViewById(R.id.editPasswordConfirm);
         btnLogin = findViewById(R.id.btnLogin);
         btnRegister = findViewById(R.id.btnRegister);
         textMessage = findViewById(R.id.textMessage);
@@ -41,17 +43,20 @@ public class LoginActivity extends AppCompatActivity {
         String walkerId = editWalkerId.getText().toString();
         String password = editPassword.getText().toString();
 
-        // E1〜E3：入力チェック
+        // E1〜E3：入力チェック（ログイン時は確認欄をチェックしない）
         if (!checkInput(walkerId, password)) {
             return;
         }
 
-        textMessage.setText("ログイン中...");
+        showMessage("ログイン中...", false);
+        setButtonsEnabled(false);
 
-        // 通信を伴うため別スレッドで実行
         new Thread(() -> {
             int result = authController.AuthenticateUser(walkerId, password);
-            runOnUiThread(() -> handleAuthResult(result, false));
+            runOnUiThread(() -> {
+                setButtonsEnabled(true);
+                handleAuthResult(result, false);
+            });
         }).start();
     }
 
@@ -59,32 +64,43 @@ public class LoginActivity extends AppCompatActivity {
     private void onRegisterClicked() {
         String walkerId = editWalkerId.getText().toString();
         String password = editPassword.getText().toString();
+        String passwordConfirm = editPasswordConfirm.getText().toString();
 
         // E1〜E3：入力チェック
         if (!checkInput(walkerId, password)) {
             return;
         }
 
-        textMessage.setText("登録中...");
+        // 新規登録時のみ：パスワード確認欄のチェック
+        if (!password.equals(passwordConfirm)) {
+            showMessage("パスワードが一致しません。", true);
+            return;
+        }
+
+        showMessage("登録中...", false);
+        setButtonsEnabled(false);
 
         new Thread(() -> {
             int result = authController.RegisterUser(walkerId, password);
-            runOnUiThread(() -> handleAuthResult(result, true));
+            runOnUiThread(() -> {
+                setButtonsEnabled(true);
+                handleAuthResult(result, true);
+            });
         }).start();
     }
 
     // 入力チェック（E1, E2, E3）
     private boolean checkInput(String walkerId, String password) {
         if (walkerId.isEmpty()) {
-            textMessage.setText("ウォーカーIDを入力してください。"); // E1
+            showMessage("ウォーカーIDを入力してください。", true); // E1
             return false;
         }
         if (password.isEmpty()) {
-            textMessage.setText("パスワードを入力してください。"); // E2
+            showMessage("パスワードを入力してください。", true); // E2
             return false;
         }
         if (password.length() < 8) {
-            textMessage.setText("パスワードは8文字以上で入力してください。"); // E3
+            showMessage("パスワードは8文字以上で入力してください。", true); // E3
             return false;
         }
         return true;
@@ -95,7 +111,9 @@ public class LoginActivity extends AppCompatActivity {
         if (result == 1) {
             // 成功
             if (isRegister) {
-                textMessage.setText("登録が完了しました。ログインしてください。");
+                showMessage("登録が完了しました。ログインしてください。", false);
+                editPassword.setText("");
+                editPasswordConfirm.setText("");
             } else {
                 // ログイン成功 → ホーム画面へ遷移
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
@@ -105,13 +123,28 @@ public class LoginActivity extends AppCompatActivity {
         } else if (result == 0) {
             // 認証/登録失敗
             if (isRegister) {
-                textMessage.setText("このウォーカーIDは既に使用されています。");
+                showMessage("このウォーカーIDは既に使用されています。", true);
             } else {
-                textMessage.setText("IDまたはパスワードが正しくありません。"); // E4
+                showMessage("IDまたはパスワードが正しくありません。", true); // E4
             }
         } else {
             // result == -1：通信エラー
-            textMessage.setText("通信エラーが発生しました。"); // E5
+            showMessage("通信エラーが発生しました。", true); // E5
         }
+    }
+
+    // メッセージ表示（isError: true=赤色, false=緑色）
+    private void showMessage(String message, boolean isError) {
+        textMessage.setText(message);
+        int color = isError
+                ? ContextCompat.getColor(this, android.R.color.holo_red_dark)
+                : ContextCompat.getColor(this, android.R.color.holo_green_dark);
+        textMessage.setTextColor(color);
+    }
+
+    // ボタンの有効/無効切り替え（連打防止）
+    private void setButtonsEnabled(boolean enabled) {
+        btnLogin.setEnabled(enabled);
+        btnRegister.setEnabled(enabled);
     }
 }
