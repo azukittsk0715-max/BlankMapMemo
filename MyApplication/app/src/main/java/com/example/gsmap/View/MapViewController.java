@@ -4,11 +4,15 @@ import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Polygon;
 
 public class MapViewController {
 
     private MapView mapView;
-    boolean isFirstUpdate=true;
+    boolean isFirstUpdate = true;
+
+    // 直前の現在地マーカー（更新のたびにこれだけ消して置き直す）
+    private Marker currentMarker;
 
     public MapViewController(MapView mapView) {
         this.mapView = mapView;
@@ -38,16 +42,36 @@ public class MapViewController {
         if (isFirstUpdate) {
             mapView.getController().setZoom(15.0);
             mapView.getController().setCenter(point);
-            isFirstUpdate=false;
+            isFirstUpdate = false;
         }
 
-        // マーカー更新
-        mapView.getOverlays().clear();
+        // 訪問済みエリアとして円を塗る（マーカーより先に描画）
+        addVisitedArea(lat, lon);
 
-        Marker marker = new Marker(mapView);
-        marker.setPosition(point);
-        marker.setTitle("現在地");
+        // 現在地マーカーの更新（前回のマーカーだけ削除して置き直す）
+        if (currentMarker != null) {
+            mapView.getOverlays().remove(currentMarker);
+        }
 
-        mapView.getOverlays().add(marker);
+        currentMarker = new Marker(mapView);
+        currentMarker.setPosition(point);
+        currentMarker.setTitle("現在地");
+
+        mapView.getOverlays().add(currentMarker);
+
+        mapView.invalidate();
+    }
+
+    // 歩いた場所を半透明の円で塗りつぶす（訪問済みエリアの描画）
+    public void addVisitedArea(double lat, double lon) {
+        Polygon circle = new Polygon();
+        circle.setPoints(Polygon.pointsAsCircle(
+                new GeoPoint(lat, lon),
+                15 // 半径15メートル
+        ));
+        circle.getFillPaint().setColor(0x552196F3); // 半透明の青
+        circle.getOutlinePaint().setStrokeWidth(0f); // 枠線なし
+
+        mapView.getOverlayManager().add(circle);
     }
 }
