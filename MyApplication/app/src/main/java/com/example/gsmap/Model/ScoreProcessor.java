@@ -1,3 +1,7 @@
+package com.example.gsmap.Model;
+
+import com.example.gsmap.Model.ScoreInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
