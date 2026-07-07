@@ -1,8 +1,10 @@
-package com.example.gsmap;
+package com.example.gsmap.Controller;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,8 +13,13 @@ import androidx.core.app.ActivityCompat;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
+import com.example.gsmap.Controller.SecondActivity;
 import com.example.gsmap.Controller.AuthController;
 import android.util.Log;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,6 +28,10 @@ public class MainActivity extends AppCompatActivity {
     private MapView mapView;
     private MapViewController mapController;
     private LocationModel locationModel;
+
+    private boolean isGpsOn = false;
+    private Button gpsButton;
+    private Button button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +71,40 @@ public class MainActivity extends AppCompatActivity {
         testAuthApi();
         testAuthController();
 
-    }
 
+        //GPS-ON/OFFスイッチ
+        gpsButton = findViewById(R.id.gpsButton);
+
+            gpsButton.setOnClickListener(v -> {
+
+            isGpsOn = !isGpsOn;
+
+            if (isGpsOn) {
+                gpsButton.setText("GPS ON");
+
+                // ✅ GPS開始
+                startLocation();
+
+            } else {
+                gpsButton.setText("GPS OFF");
+
+                // ✅ GPS停止
+                locationModel.stop();
+            }
+        });
+
+        //画面遷移
+        button = findViewById(R.id.frameButton);
+        button.setOnClickListener(v -> {
+
+            Intent intent = new Intent(
+                    MainActivity.this,
+                    SecondActivity.class
+            );
+
+            startActivity(intent);
+        });
+}
     // ✅ LocationModel開始
     private void startLocation() {
         locationModel.start(this, (lat, lon) -> {

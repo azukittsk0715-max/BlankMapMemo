@@ -1,3 +1,5 @@
+package com.example.gsmap.Model;
+
 public class RoutePoint {
     private double latitude;
     private double longitude;
