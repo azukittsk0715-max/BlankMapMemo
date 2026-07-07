@@ -1,4 +1,4 @@
-package com.example.gsmap.Model;
+package com.example.gsmap;
 
 import android.Manifest;
 import android.content.Context;
