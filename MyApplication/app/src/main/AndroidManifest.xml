@@ -30,8 +30,18 @@
         <!-- ホーム画面（地図画面）：ログイン成功後に遷移する画面 -->
         <activity
             android:name=".MainActivity"
-            android:exported="false">
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
         </activity>
+
+        <activity
+            android:name=".Controller.SecondActivity" />
 
     </application>
 
