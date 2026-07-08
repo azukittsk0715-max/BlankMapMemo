@@ -16,16 +16,16 @@
         android:usesCleartextTraffic="true">
 
         <!-- ログイン画面：アプリ起動時に最初に開く画面 -->
-        <activity
-            android:name=".Controller.LoginActivity"
-            android:exported="true">
+<!--        <activity-->
+<!--            android:name=".Controller.LoginActivity"-->
+<!--            android:exported="true">-->
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN"/>-->
+<!--                <category android:name="android.intent.category.LAUNCHER"/>-->
+<!--            </intent-filter>-->
 
-        </activity>
+<!--        </activity>-->
 
         <!-- ホーム画面（地図画面）：ログイン成功後に遷移する画面 -->
         <activity
