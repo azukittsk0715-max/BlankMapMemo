@@ -12,24 +12,10 @@
         android:allowBackup="true"
         android:label="GSI Map"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-        android:usesCleartextTraffic="true">
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
 
-        <!-- ログイン画面：アプリ起動時に最初に開く画面 -->
         <activity
-            android:name=".Controller.LoginActivity"
-            android:exported="true">
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-
-        </activity>
-
-        <!-- ホーム画面（地図画面）：ログイン成功後に遷移する画面 -->
-        <activity
-            android:name=".Controller.MainActivity"
+            android:name=".MainActivity"
             android:exported="true">
 
             <intent-filter>
@@ -39,9 +25,6 @@
             </intent-filter>
 
         </activity>
-
-        <activity
-            android:name=".Controller.SecondActivity" />
 
     </application>
 
