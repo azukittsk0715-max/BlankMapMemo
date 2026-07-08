@@ -39,6 +39,8 @@
             </intent-filter>
 
         </activity>
+        <activity
+            android:name=".Model.PinModel.PinAddActivity" android:exported="false" />
 
         <activity
             android:name=".Controller.SecondActivity" />

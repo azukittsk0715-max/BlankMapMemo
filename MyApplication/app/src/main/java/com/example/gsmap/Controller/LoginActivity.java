@@ -7,6 +7,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import com.example.gsmap.Controller.MainActivity;
 import com.example.gsmap.R;
 
 public class LoginActivity extends AppCompatActivity {

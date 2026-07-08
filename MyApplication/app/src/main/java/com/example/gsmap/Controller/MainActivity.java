@@ -16,8 +16,7 @@ import org.osmdroid.views.MapView;
 import com.example.gsmap.R;
 import com.example.gsmap.View.MapViewController;
 import com.example.gsmap.Model.LocationModel;
-import com.example.gsmap.Controller.SecondActivity;
-import com.example.gsmap.Controller.AuthController;
+
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
@@ -36,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     private Button gpsButton;
     private Button button;
 
+    private String walkerId = "test";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,7 +47,11 @@ public class MainActivity extends AppCompatActivity {
         mapView = findViewById(R.id.map);
 
         // ✅ 地図Controller初期化
-        mapController = new MapViewController(mapView);
+        mapController = new MapViewController(
+                this,
+                mapView,
+                walkerId
+        );
         mapController.initMap();
 
         // ✅ 位置Model初期化

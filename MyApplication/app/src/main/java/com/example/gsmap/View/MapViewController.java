@@ -1,23 +1,38 @@
 package com.example.gsmap.View;
 
+import android.content.Context;
+import android.content.Intent;
+
+import com.example.gsmap.Model.PinModel.PinAddActivity;
+
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polygon;
 
 public class MapViewController {
 
-    private MapView mapView;
+    private final Context context;
+    private final MapView mapView;
+    private final String walkerId;
     boolean isFirstUpdate = true;
 
     // 直前の現在地マーカー（更新のたびにこれだけ消して置き直す）
     private Marker currentMarker;
 
-    public MapViewController(MapView mapView) {
-        this.mapView = mapView;
-    }
+    public MapViewController(
+            Context context,
+            MapView mapView,
+            String walkerId) {
 
+        this.context = context;
+        this.mapView = mapView;
+        this.walkerId = walkerId;
+
+    }
     public void initMap() {
 
         XYTileSource tileSource = new XYTileSource(
@@ -33,7 +48,49 @@ public class MapViewController {
 
         mapView.setTileSource(tileSource);
         mapView.setMultiTouchControls(true);
+
+    MapEventsReceiver receiver = new MapEventsReceiver() {
+
+        @Override
+        public boolean singleTapConfirmedHelper(GeoPoint p) {
+
+            Intent intent =
+                    new Intent(context, PinAddActivity.class);
+
+            intent.putExtra(
+                    "LATITUDE",
+                    p.getLatitude());
+
+            intent.putExtra(
+                    "LONGITUDE",
+                    p.getLongitude());
+
+            intent.putExtra(
+                    "WALKER_ID",
+                    walkerId);
+
+            context.startActivity(intent);
+
+            return true;
+        }
+
+        @Override
+        public boolean longPressHelper(GeoPoint p) {
+
+            return false;
+
+        }
+    };
+
+    MapEventsOverlay overlay =
+            new MapEventsOverlay(receiver);
+
+        mapView.getOverlays().add(overlay);
+
+        mapView.invalidate();
+
     }
+
 
     public void updateLocation(double lat, double lon) {
 
