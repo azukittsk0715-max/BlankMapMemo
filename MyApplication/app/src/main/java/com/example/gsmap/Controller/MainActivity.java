@@ -128,8 +128,11 @@ public class MainActivity extends AppCompatActivity {
 
             Timestamp cTime = new Timestamp(System.currentTimeMillis());
 
-            savelocationModel = new SaveLocationModel();
-            savelocationModel.saveRoutePoint(walkerId, lat, lon, cTime);
+            new Thread(() -> {
+                SaveLocationModel saveLocationModel = new SaveLocationModel();
+                boolean result = saveLocationModel.saveRoutePoint(walkerId, lat, lon, cTime);
+            }).start();
+
         });
     }
 
