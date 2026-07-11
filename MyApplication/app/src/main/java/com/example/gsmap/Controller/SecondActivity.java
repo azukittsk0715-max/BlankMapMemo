@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.gsmap.R;
 import com.example.gsmap.Model.GetLocationModel;
 import com.example.gsmap.Model.RoutePoint;
+import com.example.gsmap.Model.ScoreApiModel;
 import com.example.gsmap.Model.ScoreInfo;
 import com.example.gsmap.Model.ScoreProcessor;
 
@@ -45,17 +46,26 @@ public class SecondActivity extends AppCompatActivity {
         txtDistance.setText("累計距離：取得中");
 
         new Thread(() -> {
+            ScoreApiModel scoreApiModel = new ScoreApiModel();
             GetLocationModel getLocationModel = new GetLocationModel();
+            ScoreProcessor scoreProcessor = new ScoreProcessor();
+
+            ScoreInfo currentScoreInfo = scoreApiModel.fetchScore(walkerId);
             List<RoutePoint> path = getLocationModel.fetchRouteData(walkerId);
 
-            ScoreProcessor scoreProcessor = new ScoreProcessor();
-            ScoreInfo scoreInfo = new ScoreInfo(walkerId, 250);
-
             double totalDistance = scoreProcessor.calculateTotalDistance(path);
-            int newScore = scoreProcessor.calcScore(scoreInfo, path);
+            int newScore = scoreProcessor.calcScore(currentScoreInfo, path);
+
+            ScoreInfo newScoreInfo = new ScoreInfo(walkerId, newScore);
+            boolean saveResult = scoreApiModel.saveScore(newScoreInfo);
 
             runOnUiThread(() -> {
-                txtScore.setText("スコア：" + newScore + "点");
+                if (saveResult) {
+                    txtScore.setText("スコア：" + newScore + "点");
+                } else {
+                    txtScore.setText("スコア：" + newScore + "点（保存失敗）");
+                }
+
                 txtDistance.setText("累計距離：" + String.format("%.1f", totalDistance) + "m");
             });
         }).start();
