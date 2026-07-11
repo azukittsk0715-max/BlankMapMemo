@@ -4,6 +4,7 @@
 
 package com.example.gsmap.Model;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -11,6 +12,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,84 +21,145 @@ import java.util.concurrent.Future;
 
 public class GetLocationModel {
 
-    // 認証APIのベースURL（サーバのIPアドレス）
-    private static final String BASE_URL = "http://172.21.33.121:7070";
+        // 認証APIのベースURL（サーバのIPアドレス）
+        private static final String BASE_URL = "http://172.21.33.121:7070";
 
-    // ① 新規登録：APIの /register にIDとパスワードを送る
-    public boolean fetchGetLocation(String walkerId, String password) {
-        JSONObject result = postToApi("/route/get", walkerId, password);
-        return result != null && result.optBoolean("success", false);
+
+        public static class RouteData {
+
+            private final double latitude;
+        private final double longitude;
+        private final String cTime;
+
+        public RouteData(double latitude,
+                         double longitude,
+                         String cTime) {
+
+            this.latitude = latitude;
+            this.longitude = longitude;
+            this.cTime = cTime;
+        }
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
+
+        public String getCTime() {
+            return cTime;
+        }
     }
 
-    // ② 情報取得：このAPI構成では単独取得は使わないが、設計の形を保つため残す
-    public String getWalkerPassword(String walkerId) {
-        // このAPI設計では照合はサーバ側で行うため、ここでは使用しない
-        return null;
-    }
-
-    // ③ ログイン照合：APIの /login にIDとパスワードを送る
-    public boolean verifyPassword(String walkerId, String inputPassword) {
-        JSONObject result = postToApi("/login", walkerId, inputPassword);
-        return result != null && result.optBoolean("success", false);
-    }
 
     // --- ここから下は共通の通信処理 ---
 
     // 指定したエンドポイントにIDとパスワードをPOSTし、結果のJSONを返す
-    private JSONObject postToApi(String endpoint, String walkerId, String password) {
-        // 別スレッドで通信を実行する（メインスレッドで通信するとアプリが落ちるため）
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<JSONObject> future = executor.submit(new Callable<JSONObject>() {
-            @Override
-            public JSONObject call() {
-                try {
-                    URL url = new URL(BASE_URL + endpoint);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Content-Type", "application/json");
-                    conn.setDoOutput(true);
-                    conn.setConnectTimeout(5000);
-                    conn.setReadTimeout(5000);
 
-                    // 送信するJSONを作る
-                    JSONObject body = new JSONObject();
-                    body.put("walker_id", walkerId);
-                    body.put("password", password);
+    /**
+     * 指定ユーザーの移動経路を取得する
+     */
+    public List<RouteData> fetchRouteData(String walkerId) {
 
-                    // JSONを送信
-                    OutputStream os = conn.getOutputStream();
-                    os.write(body.toString().getBytes("UTF-8"));
-                    os.flush();
-                    os.close();
+        ExecutorService executor =
+                Executors.newSingleThreadExecutor();
 
-                    // 応答を読み取る
-                    BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
+        Future<List<RouteData>> future =
+                executor.submit(() -> {
+
+                    List<RouteData> routeList =
+                            new ArrayList<>();
+
+                    try {
+
+                        URL url = new URL(
+                                BASE_URL +
+                                        "/route/get?walker_id=" +
+                                        walkerId
+                        );
+
+                        HttpURLConnection conn =
+                                (HttpURLConnection)
+                                        url.openConnection();
+
+                        conn.setRequestMethod("GET");
+                        conn.setConnectTimeout(5000);
+                        conn.setReadTimeout(5000);
+
+                        BufferedReader reader =
+                                new BufferedReader(
+                                        new InputStreamReader(
+                                                conn.getInputStream(),
+                                                "UTF-8"
+                                        )
+                                );
+
+                        StringBuilder response =
+                                new StringBuilder();
+
+                        String line;
+
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+
+                        reader.close();
+
+                        JSONObject json =
+                                new JSONObject(response.toString());
+
+                        if (json.optBoolean("success")) {
+
+                            JSONArray routes =
+                                    json.getJSONArray("routes");
+
+                            for (int i = 0;
+                                 i < routes.length();
+                                 i++) {
+
+                                JSONObject route =
+                                        routes.getJSONObject(i);
+
+                                double latitude =
+                                        route.getDouble("latitude");
+
+                                double longitude =
+                                        route.getDouble("longitude");
+
+                                String cTime =
+                                        route.getString("c_time");
+
+                                routeList.add(
+                                        new RouteData(
+                                                latitude,
+                                                longitude,
+                                                cTime
+                                        )
+                                );
+                            }
+                        }
+
+                        conn.disconnect();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    reader.close();
-                    conn.disconnect();
 
-                    // 受け取った文字列をJSONに変換して返す
-                    return new JSONObject(response.toString());
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
-                }
-            }
-        });
+                    return routeList;
+                });
 
         try {
-            return future.get(); // 通信が終わるまで待って、結果を受け取る
+            return future.get();
+
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            return new ArrayList<>();
+
         } finally {
             executor.shutdown();
         }
     }
+
 }
