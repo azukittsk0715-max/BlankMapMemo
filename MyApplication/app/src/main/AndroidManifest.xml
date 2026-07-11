@@ -29,7 +29,7 @@
 
         <!-- ホーム画面（地図画面）：ログイン成功後に遷移する画面 -->
         <activity
-            android:name=".MainActivity"
+            android:name=".Controller.MainActivity"
             android:exported="true">
 
             <intent-filter>

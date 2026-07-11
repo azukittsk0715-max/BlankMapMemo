@@ -4,15 +4,14 @@ import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.Polygon;
 
 public class MapViewController {
 
     private MapView mapView;
     boolean isFirstUpdate = true;
 
-    // 直前の現在地マーカー（更新のたびにこれだけ消して置き直す）
     private Marker currentMarker;
+    private FogOverlay fogOverlay; // 霧レイヤー
 
     public MapViewController(MapView mapView) {
         this.mapView = mapView;
@@ -33,6 +32,10 @@ public class MapViewController {
 
         mapView.setTileSource(tileSource);
         mapView.setMultiTouchControls(true);
+
+        // 霧レイヤーを地図に追加
+        fogOverlay = new FogOverlay();
+        mapView.getOverlays().add(fogOverlay);
     }
 
     public void updateLocation(double lat, double lon) {
@@ -45,10 +48,10 @@ public class MapViewController {
             isFirstUpdate = false;
         }
 
-        // 訪問済みエリアとして円を塗る（マーカーより先に描画）
+        // 訪問済みエリア（霧に穴を開ける）
         addVisitedArea(lat, lon);
 
-        // 現在地マーカーの更新（前回のマーカーだけ削除して置き直す）
+        // 現在地マーカーの更新
         if (currentMarker != null) {
             mapView.getOverlays().remove(currentMarker);
         }
@@ -62,16 +65,9 @@ public class MapViewController {
         mapView.invalidate();
     }
 
-    // 歩いた場所を半透明の円で塗りつぶす（訪問済みエリアの描画）
+    // 歩いた場所の霧を晴らす（訪問済みエリアの登録）
     public void addVisitedArea(double lat, double lon) {
-        Polygon circle = new Polygon();
-        circle.setPoints(Polygon.pointsAsCircle(
-                new GeoPoint(lat, lon),
-                30 // 半径30メートル
-        ));
-        circle.getFillPaint().setColor(0x552196F3); // 半透明の青
-        circle.getOutlinePaint().setStrokeWidth(0f); // 枠線なし
-
-        mapView.getOverlayManager().add(circle);
+        fogOverlay.addVisitedPoint(lat, lon);
+        mapView.invalidate();
     }
 }

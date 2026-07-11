@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
@@ -13,13 +14,9 @@ import androidx.core.app.ActivityCompat;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
-import com.example.gsmap.Controller.SecondActivity;
-import com.example.gsmap.Controller.AuthController;
-import android.util.Log;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import com.example.gsmap.R;
+import com.example.gsmap.MapViewController;
+import com.example.gsmap.LocationModel;
 
 public class MainActivity extends AppCompatActivity {
 
