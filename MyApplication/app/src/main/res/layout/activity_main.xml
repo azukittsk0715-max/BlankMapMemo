@@ -25,7 +25,7 @@
             android:id="@+id/frameButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="frame change" />
+            android:text="スコア確認" />
     </LinearLayout>
 
 </FrameLayout>
