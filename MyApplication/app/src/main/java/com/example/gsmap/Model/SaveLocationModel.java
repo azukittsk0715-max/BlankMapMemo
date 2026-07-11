@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Timestamp;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -24,7 +25,7 @@ public class SaveLocationModel {
             String walkerId,
             double latitude,
             double longitude,
-            String cTime) {
+            Timestamp cTime) {
 
         ExecutorService executor =
                 Executors.newSingleThreadExecutor();

@@ -20,6 +20,7 @@ import com.example.gsmap.Model.LocationModel;
 
 import android.util.Log;
 
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String walkerId = "test";
     LocalDateTime now = LocalDateTime.now();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,11 +126,10 @@ public class MainActivity extends AppCompatActivity {
         locationModel.start(this, (lat, lon) -> {
             mapController.updateLocation(lat, lon);
 
-            String cTime = now.format(
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            );
+            Timestamp cTime = new Timestamp(System.currentTimeMillis());
 
-            savelocationModel.saveRoutePoint(walkerId, lat, lon,cTime);
+            savelocationModel = new SaveLocationModel();
+            savelocationModel.saveRoutePoint(walkerId, lat, lon, cTime);
         });
     }
 
