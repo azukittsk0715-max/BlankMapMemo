@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
+import com.example.gsmap.Model.SaveLocationModel;
 import com.example.gsmap.R;
 import com.example.gsmap.View.MapViewController;
 import com.example.gsmap.Model.LocationModel;
@@ -20,6 +21,8 @@ import com.example.gsmap.Model.LocationModel;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
@@ -31,11 +34,14 @@ public class MainActivity extends AppCompatActivity {
     private MapViewController mapController;
     private LocationModel locationModel;
 
+    private SaveLocationModel savelocationModel;
+
     private boolean isGpsOn = false;
     private Button gpsButton;
     private Button button;
 
     private String walkerId = "test";
+    LocalDateTime now = LocalDateTime.now();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +123,12 @@ public class MainActivity extends AppCompatActivity {
     private void startLocation() {
         locationModel.start(this, (lat, lon) -> {
             mapController.updateLocation(lat, lon);
+
+            String cTime = now.format(
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            );
+
+            savelocationModel.saveRoutePoint(walkerId, lat, lon,cTime);
         });
     }
 
