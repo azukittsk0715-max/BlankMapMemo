@@ -22,7 +22,7 @@ public class MapViewController {
 
     // 直前の現在地マーカー（更新のたびにこれだけ消して置き直す）
     private Marker currentMarker;
-
+    private FogOverlay fogOverlay; // 霧レイヤー
     public MapViewController(
             Context context,
             MapView mapView,
@@ -49,7 +49,11 @@ public class MapViewController {
         mapView.setTileSource(tileSource);
         mapView.setMultiTouchControls(true);
 
-    MapEventsReceiver receiver = new MapEventsReceiver() {
+        // 霧レイヤーを地図に追加
+        fogOverlay = new FogOverlay();
+        mapView.getOverlays().add(fogOverlay);
+
+        MapEventsReceiver receiver = new MapEventsReceiver() {
 
         @Override
         public boolean singleTapConfirmedHelper(GeoPoint p) {
@@ -121,14 +125,7 @@ public class MapViewController {
 
     // 歩いた場所を半透明の円で塗りつぶす（訪問済みエリアの描画）
     public void addVisitedArea(double lat, double lon) {
-        Polygon circle = new Polygon();
-        circle.setPoints(Polygon.pointsAsCircle(
-                new GeoPoint(lat, lon),
-                15 // 半径15メートル
-        ));
-        circle.getFillPaint().setColor(0x552196F3); // 半透明の青
-        circle.getOutlinePaint().setStrokeWidth(0f); // 枠線なし
-
-        mapView.getOverlayManager().add(circle);
+        fogOverlay.addVisitedPoint(lat, lon);
+        mapView.invalidate();
     }
 }
