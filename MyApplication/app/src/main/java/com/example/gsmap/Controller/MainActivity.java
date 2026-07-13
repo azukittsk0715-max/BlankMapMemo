@@ -130,10 +130,14 @@ public class MainActivity extends AppCompatActivity {
         //画面遷移
         button = findViewById(R.id.frameButton);
         button.setOnClickListener(v -> {
-
             Intent intent = new Intent(
                     MainActivity.this,
                     SecondActivity.class
+            );
+
+            intent.putExtra(
+                    "walker_id",
+                    currentWalkerId
             );
 
             startActivity(intent);
