@@ -26,6 +26,10 @@ public class MainActivity extends AppCompatActivity {
     private MapViewController mapController;
     private LocationModel locationModel;
 
+    private com.example.gsmap.Model.RouteModel routeModel;
+    private String currentWalkerId;
+
+
     private boolean isGpsOn = false;
     private Button gpsButton;
     private Button button;
@@ -33,6 +37,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ログイン画面から渡されたwalker_idを受け取る
+        currentWalkerId = getIntent().getStringExtra("walker_id");
+        if (currentWalkerId == null) {
+            currentWalkerId = "enomoto"; // 直接MainActivityを開いた場合の保険（テスト用）
+        }
 
         Configuration.getInstance().setUserAgentValue(getPackageName());
         setContentView(R.layout.activity_main);
@@ -45,6 +55,19 @@ public class MainActivity extends AppCompatActivity {
 
         // ✅ 位置Model初期化
         locationModel = new LocationModel();
+
+        routeModel = new com.example.gsmap.Model.RouteModel();
+
+// ログイン後：過去の移動経路を取得して霧を晴らし直す
+        new Thread(() -> {
+            java.util.List<com.example.gsmap.Model.RouteModel.RoutePoint> past =
+                    routeModel.getRoutes(currentWalkerId);
+            runOnUiThread(() -> {
+                for (com.example.gsmap.Model.RouteModel.RoutePoint p : past) {
+                    mapController.addVisitedArea(p.latitude, p.longitude);
+                }
+            });
+        }).start();
 
         // ✅ 権限チェック
         if (ActivityCompat.checkSelfPermission(
@@ -106,6 +129,10 @@ public class MainActivity extends AppCompatActivity {
     private void startLocation() {
         locationModel.start(this, (lat, lon) -> {
             mapController.updateLocation(lat, lon);
+
+            // 取得した位置をサーバーに保存（通信は別スレッドで）
+            new Thread(() -> routeModel.saveRoute(currentWalkerId, lat, lon)).start();
+
         });
     }
 
