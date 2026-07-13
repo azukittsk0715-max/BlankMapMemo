@@ -118,6 +118,7 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 // ログイン成功 → ホーム画面へ遷移
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                intent.putExtra("walker_id", editWalkerId.getText().toString());
                 startActivity(intent);
                 finish();
             }
