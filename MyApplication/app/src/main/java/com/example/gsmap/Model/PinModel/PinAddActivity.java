@@ -1,5 +1,6 @@
 package com.example.gsmap.Model.PinModel;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -7,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.gsmap.Model.PinRegister;
 import com.example.gsmap.R;
 
 public class PinAddActivity extends AppCompatActivity {
@@ -61,6 +63,7 @@ public class PinAddActivity extends AppCompatActivity {
                 memo
         );
 
+
         if (success) {
 
             Toast.makeText(
@@ -69,10 +72,38 @@ public class PinAddActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT
             ).show();
 
+            Intent resultIntent =
+                    new Intent();
+
+            resultIntent.putExtra(
+                    "LATITUDE",
+                    latitude
+            );
+
+            resultIntent.putExtra(
+                    "LONGITUDE",
+                    longitude
+            );
+
+            resultIntent.putExtra(
+                    "MEMO",
+                    memo
+            );
+
+            setResult(
+                    RESULT_OK,
+                    resultIntent
+            );
+
             finish();
 
         } else {
-            PinErrorHandler.showError(this, 5);
+
+            PinErrorHandler.showError(
+                    this,
+                    5
+            );
         }
+
     }
 }

@@ -1,6 +1,7 @@
 package com.example.gsmap.Model.PinModel;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -9,8 +10,10 @@ import java.net.URL;
 
 public class GetPinInfo {
 
+
     private static final String URL_STRING =
-            "http://172.21.33.121:7070/pin?walker_id=";
+            "http://172.21.33.121:7070/pin/get?walker_id=";
+
 
     public JSONArray getPins(String walkerId){
 
@@ -40,7 +43,11 @@ public class GetPinInfo {
 
             reader.close();
 
-            return new JSONArray(result.toString());
+            JSONObject json =
+                    new JSONObject(result.toString());
+
+            return json.getJSONArray("pins");
+
 
         }catch(Exception e){
 

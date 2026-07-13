@@ -4,30 +4,30 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.example.gsmap.Model.LocationModel;
+import com.example.gsmap.Model.RouteModel;
+import com.example.gsmap.Model.SaveLocationModel;
+import com.example.gsmap.Model.PinModel.GetPinInfo;
+import com.example.gsmap.R;
+import com.example.gsmap.View.MapViewController;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
-
-import com.example.gsmap.Model.SaveLocationModel;
-import com.example.gsmap.R;
-import com.example.gsmap.View.MapViewController;
-import com.example.gsmap.Model.LocationModel;
-
-import android.util.Log;
-
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Locale;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
+import com.example.gsmap.Model.PinModel.PinAddActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,59 +37,143 @@ public class MainActivity extends AppCompatActivity {
     private MapViewController mapController;
     private LocationModel locationModel;
 
-    private SaveLocationModel savelocationModel;
+    private RouteModel routeModel;
 
-    private com.example.gsmap.Model.RouteModel routeModel;
     private String currentWalkerId;
 
     private boolean isGpsOn = false;
     private boolean isLocationPermissionGranted = false;
+
     private Button gpsButton;
     private Button button;
 
-    //private String walkerId = "test";
     LocalDateTime now = LocalDateTime.now();
+    private final ActivityResultLauncher<Intent>
+            pinAddLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
 
+                        if (result.getResultCode() == RESULT_OK
+                                && result.getData() != null) {
+
+                            Intent data =
+                                    result.getData();
+
+                            double lat =
+                                    data.getDoubleExtra(
+                                            "LATITUDE",
+                                            0
+                                    );
+
+                            double lon =
+                                    data.getDoubleExtra(
+                                            "LONGITUDE",
+                                            0
+                                    );
+
+                            String memo =
+                                    data.getStringExtra(
+                                            "MEMO"
+                                    );
+
+                            mapController.addPin(
+                                    lat,
+                                    lon,
+                                    memo
+                            );
+                        }
+                    }
+            );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
-        // ログイン画面から渡されたwalker_idを受け取る
-        currentWalkerId = getIntent().getStringExtra("walker_id");
+        // ログイン画面から渡されたwalker_idを取得
+        currentWalkerId =
+                getIntent().getStringExtra("walker_id");
+
         if (currentWalkerId == null) {
-            currentWalkerId = "enomoto"; // 直接MainActivityを開いた場合の保険（テスト用）
+            currentWalkerId = "enomoto";
         }
 
-        Configuration.getInstance().setUserAgentValue(getPackageName());
+        Configuration.getInstance()
+                .setUserAgentValue(getPackageName());
+
         setContentView(R.layout.activity_main);
 
         mapView = findViewById(R.id.map);
 
-        // ✅ 地図Controller初期化
+        // 地図初期化
         mapController = new MapViewController(
                 this,
                 mapView,
                 currentWalkerId
         );
+
         mapController.initMap();
 
-        // ✅ 位置Model初期化
+        mapController.setOnMapTapListener(
+                (lat, lon) -> {
+
+                    Intent intent =
+                            new Intent(
+                                    MainActivity.this,
+                                    PinAddActivity.class
+                            );
+
+                    intent.putExtra(
+                            "LATITUDE",
+                            lat
+                    );
+
+                    intent.putExtra(
+                            "LONGITUDE",
+                            lon
+                    );
+
+                    intent.putExtra(
+                            "WALKER_ID",
+                            currentWalkerId
+                    );
+
+                    pinAddLauncher.launch(
+                            intent
+                    );
+                }
+        );
+
+        // 位置情報管理
         locationModel = new LocationModel();
 
-        routeModel = new com.example.gsmap.Model.RouteModel();
-        // ログイン後：過去の移動経路を取得して霧を晴らし直す
+        // 経路管理
+        routeModel = new RouteModel();
+
+        // 過去の移動経路表示
         new Thread(() -> {
-            java.util.List<com.example.gsmap.Model.RouteModel.RoutePoint> past =
+
+            java.util.List<RouteModel.RoutePoint> past =
                     routeModel.getRoutes(currentWalkerId);
+
             runOnUiThread(() -> {
-                for (com.example.gsmap.Model.RouteModel.RoutePoint p : past) {
-                    mapController.addVisitedArea(p.latitude, p.longitude);
+
+                for (RouteModel.RoutePoint p : past) {
+
+                    mapController.addVisitedArea(
+                            p.latitude,
+                            p.longitude
+                    );
                 }
             });
+
         }).start();
 
-        // ✅ 権限チェック
+        // 保存済みピン表示
+        loadPins();
+
+        // 権限チェック
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -104,59 +188,54 @@ public class MainActivity extends AppCompatActivity {
             );
 
         } else {
+
             isLocationPermissionGranted = true;
-            // startLocation()ここを修正しましたGPS問題を
         }
 
-        //GPS-ON/OFFスイッチ
+        // GPSボタン
         gpsButton = findViewById(R.id.gpsButton);
 
-            /*gpsButton.setOnClickListener(v -> {
-
-            isGpsOn = !isGpsOn;
-
-            if (isGpsOn) {
-                gpsButton.setText("GPS ON");
-
-                // ✅ GPS開始
-                startLocation();
-
-            } else {
-                gpsButton.setText("GPS OFF");
-
-                // ✅ GPS停止
-                locationModel.stop();
-            }*/
         gpsButton.setOnClickListener(v -> {
 
             if (!isLocationPermissionGranted) {
+
                 ActivityCompat.requestPermissions(
                         this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        new String[]{
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                        },
                         REQUEST_PERMISSION
                 );
-                return; // 権限が無い場合はここで処理を止める
+
+                return;
             }
 
             isGpsOn = !isGpsOn;
 
             if (isGpsOn) {
+
                 gpsButton.setText("GPS ON");
+
                 startLocation();
+
             } else {
+
                 gpsButton.setText("GPS OFF");
+
                 locationModel.stop();
             }
-
         });
 
-        //画面遷移
+        // 画面遷移
         button = findViewById(R.id.frameButton);
+
         button.setOnClickListener(v -> {
-            Intent intent = new Intent(
-                    MainActivity.this,
-                    SecondActivity.class
-            );
+
+            Intent intent =
+                    new Intent(
+                            MainActivity.this,
+                            SecondActivity.class
+                    );
 
             intent.putExtra(
                     "walker_id",
@@ -165,27 +244,55 @@ public class MainActivity extends AppCompatActivity {
 
             startActivity(intent);
         });
-}
-    // ✅ LocationModel開始
+    }
+
+    /**
+     * GPS開始
+     */
     private void startLocation() {
+
         locationModel.start(this, (lat, lon) -> {
-            mapController.updateLocation(lat, lon);
 
-            // 取得した位置をサーバーに保存（通信は別スレッドで）
-            new Thread(() -> routeModel.saveRoute(currentWalkerId, lat, lon)).start();
+            mapController.updateLocation(
+                    lat,
+                    lon
+            );
 
-            Timestamp cTime = new Timestamp(System.currentTimeMillis());
+            // RouteModelへ保存
+            new Thread(() ->
+                    routeModel.saveRoute(
+                            currentWalkerId,
+                            lat,
+                            lon
+                    )
+            ).start();
+
+            // API保存
+            Timestamp cTime =
+                    new Timestamp(
+                            System.currentTimeMillis()
+                    );
 
             new Thread(() -> {
-                SaveLocationModel saveLocationModel = new SaveLocationModel();
-                boolean result = saveLocationModel.saveRoutePoint(currentWalkerId, lat, lon, cTime);
-            }).start();
 
+                SaveLocationModel saveLocationModel =
+                        new SaveLocationModel();
+
+                saveLocationModel.saveRoutePoint(
+                        currentWalkerId,
+                        lat,
+                        lon,
+                        cTime
+                );
+
+            }).start();
         });
     }
 
-    // ✅ 権限結果
-    /*@Override
+    /**
+     * 権限取得結果
+     */
+    @Override
     public void onRequestPermissionsResult(
             int requestCode,
             @NonNull String[] permissions,
@@ -198,39 +305,66 @@ public class MainActivity extends AppCompatActivity {
         );
 
         if (requestCode == REQUEST_PERMISSION) {
+
             if (grantResults.length > 0
                     && grantResults[0]
                     == PackageManager.PERMISSION_GRANTED) {
 
-                startLocation();
-            }
-        }
-    }*/
-
-    @Override
-    public void onRequestPermissionsResult(
-        int requestCode,
-        @NonNull String[] permissions,
-        @NonNull int[] grantResults) {
-
-        super.onRequestPermissionsResult(
-                requestCode,
-                permissions,
-                grantResults
-        );
-
-        if (requestCode == REQUEST_PERMISSION) {
-            if (grantResults.length > 0
-                && grantResults[0]
-                == PackageManager.PERMISSION_GRANTED) {
-
-                // :white_check_mark: 権限が取れたことだけ記録する。GPSはまだ開始しない
                 isLocationPermissionGranted = true;
 
             } else {
+
                 isLocationPermissionGranted = false;
             }
         }
     }
 
+    /**
+     * DBからピンを取得して表示
+     */
+    private void loadPins() {
+
+        new Thread(() -> {
+
+            try {
+
+                GetPinInfo getPinInfo =
+                        new GetPinInfo();
+
+                JSONArray pins =
+                        getPinInfo.getPins(
+                                currentWalkerId
+                        );
+
+                runOnUiThread(() -> {
+
+                    try {
+
+                        for (int i = 0;
+                             i < pins.length();
+                             i++) {
+
+                            JSONObject pin =
+                                    pins.getJSONObject(i);
+
+                            mapController.addPin(
+                                    pin.getDouble("latitude"),
+                                    pin.getDouble("longitude"),
+                                    pin.optString("memo", "")
+                            );
+                        }
+
+                    } catch (Exception e) {
+
+                        e.printStackTrace();
+                    }
+                });
+
+            } catch (Exception e) {
+
+                e.printStackTrace();
+            }
+
+        }).start();
+    }
 }
