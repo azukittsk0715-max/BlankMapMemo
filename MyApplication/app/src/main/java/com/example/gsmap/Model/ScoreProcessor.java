@@ -34,15 +34,15 @@ public class ScoreProcessor {
                 );
 
         double a =
-                Math.sin(latitudeDifference / 2)
-                        * Math.sin(latitudeDifference / 2)
+                Math.sin(latitudeDifference / 2.0)
+                        * Math.sin(latitudeDifference / 2.0)
                         + Math.cos(previousLatitude)
                         * Math.cos(currentLatitude)
-                        * Math.sin(longitudeDifference / 2)
-                        * Math.sin(longitudeDifference / 2);
+                        * Math.sin(longitudeDifference / 2.0)
+                        * Math.sin(longitudeDifference / 2.0);
 
         double c =
-                2 * Math.atan2(
+                2.0 * Math.atan2(
                         Math.sqrt(a),
                         Math.sqrt(1.0 - a)
                 );
@@ -74,13 +74,25 @@ public class ScoreProcessor {
     }
 
     public int calculateScoreFromTotalDistance(
+            double totalDistance) {
+
+        if (totalDistance <= 0.0) {
+            return 0;
+        }
+
+        return (int) Math.floor(
+                totalDistance / METERS_PER_POINT
+        );
+    }
+
+    public int calculateScoreFromPath(
             List<RoutePoint> path) {
 
         double totalDistance =
                 calculateTotalDistance(path);
 
-        return (int) Math.floor(
-                totalDistance / METERS_PER_POINT
+        return calculateScoreFromTotalDistance(
+                totalDistance
         );
     }
 
@@ -88,10 +100,6 @@ public class ScoreProcessor {
             ScoreInfo scoreInfo,
             List<RoutePoint> path) {
 
-        if (scoreInfo == null) {
-            return -1;
-        }
-
-        return calculateScoreFromTotalDistance(path);
+        return calculateScoreFromPath(path);
     }
 }
