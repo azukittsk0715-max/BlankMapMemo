@@ -85,11 +85,6 @@ public class MainActivity extends AppCompatActivity {
             startLocation();
         }
 
-        // ===== 認証APIテスト（動作確認用・あとで消す）=====
-        testAuthApi();
-        testAuthController();
-
-
         //GPS-ON/OFFスイッチ
         gpsButton = findViewById(R.id.gpsButton);
 
@@ -136,45 +131,6 @@ public class MainActivity extends AppCompatActivity {
             }).start();
 
         });
-    }
-
-    // ===== 認証APIテスト用メソッド（動作確認が済んだら削除）=====
-    private void testAuthApi() {
-        new Thread(() -> {
-            com.example.gsmap.Model.WalkerModel walkerModel =
-                    new com.example.gsmap.Model.WalkerModel();
-
-            // テスト①：新規登録（apptestというIDで登録してみる）
-            boolean registered = walkerModel.registerWalker("apptest", "mypass");
-            android.util.Log.d("AUTH_TEST", "登録結果: " + registered);
-
-            // テスト②：正しいパスワードでログイン（成功するはず）
-            boolean loginOk = walkerModel.verifyPassword("apptest", "mypass");
-            android.util.Log.d("AUTH_TEST", "ログイン(正しいPW): " + loginOk);
-
-            // テスト③：間違ったパスワードでログイン（失敗するはず）
-            boolean loginNg = walkerModel.verifyPassword("apptest", "wrongpass");
-            android.util.Log.d("AUTH_TEST", "ログイン(間違いPW): " + loginNg);
-        }).start();
-    }
-
-    // C2 AuthControllerのテスト
-    private void testAuthController() {
-        new Thread(() -> {
-            AuthController authController = new AuthController();
-
-            // 新規登録テスト
-            int registerResult = authController.RegisterUser("ctrltest", "ctrlpass");
-            Log.d("CTRL_TEST", "登録結果: " + registerResult);
-
-            // 正しいPWでログインテスト
-            int loginOk = authController.AuthenticateUser("ctrltest", "ctrlpass");
-            Log.d("CTRL_TEST", "ログイン(正しいPW): " + loginOk);
-
-            // 間違ったPWでログインテスト
-            int loginNg = authController.AuthenticateUser("ctrltest", "wrongpass");
-            Log.d("CTRL_TEST", "ログイン(間違いPW): " + loginNg);
-        }).start();
     }
 
     // ✅ 権限結果
