@@ -28,6 +28,9 @@ public class LocationModel {
 
     public void start(Context context, LocationListener listener) {
 
+        //二重登録防止：すでに動いていたら一旦停止してから登録しなおす
+        stop();
+
         fusedLocationClient =
                 LocationServices.getFusedLocationProviderClient(context);
 

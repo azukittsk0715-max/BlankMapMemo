@@ -43,10 +43,11 @@ public class MainActivity extends AppCompatActivity {
     private String currentWalkerId;
 
     private boolean isGpsOn = false;
+    private boolean isLocationPermissionGranted = false;
     private Button gpsButton;
     private Button button;
 
-    private String walkerId = "test";
+    //private String walkerId = "test";
     LocalDateTime now = LocalDateTime.now();
 
 
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         mapController = new MapViewController(
                 this,
                 mapView,
-                walkerId
+                currentWalkerId
         );
         mapController.initMap();
 
@@ -103,13 +104,14 @@ public class MainActivity extends AppCompatActivity {
             );
 
         } else {
-            startLocation();
+            isLocationPermissionGranted = true;
+            // startLocation()ここを修正しましたGPS問題を
         }
 
         //GPS-ON/OFFスイッチ
         gpsButton = findViewById(R.id.gpsButton);
 
-            gpsButton.setOnClickListener(v -> {
+            /*gpsButton.setOnClickListener(v -> {
 
             isGpsOn = !isGpsOn;
 
@@ -124,7 +126,28 @@ public class MainActivity extends AppCompatActivity {
 
                 // ✅ GPS停止
                 locationModel.stop();
+            }*/
+        gpsButton.setOnClickListener(v -> {
+
+            if (!isLocationPermissionGranted) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        REQUEST_PERMISSION
+                );
+                return; // 権限が無い場合はここで処理を止める
             }
+
+            isGpsOn = !isGpsOn;
+
+            if (isGpsOn) {
+                gpsButton.setText("GPS ON");
+                startLocation();
+            } else {
+                gpsButton.setText("GPS OFF");
+                locationModel.stop();
+            }
+
         });
 
         //画面遷移
@@ -155,14 +178,14 @@ public class MainActivity extends AppCompatActivity {
 
             new Thread(() -> {
                 SaveLocationModel saveLocationModel = new SaveLocationModel();
-                boolean result = saveLocationModel.saveRoutePoint(walkerId, lat, lon, cTime);
+                boolean result = saveLocationModel.saveRoutePoint(currentWalkerId, lat, lon, cTime);
             }).start();
 
         });
     }
 
     // ✅ 権限結果
-    @Override
+    /*@Override
     public void onRequestPermissionsResult(
             int requestCode,
             @NonNull String[] permissions,
@@ -182,5 +205,32 @@ public class MainActivity extends AppCompatActivity {
                 startLocation();
             }
         }
+    }*/
+
+    @Override
+    public void onRequestPermissionsResult(
+        int requestCode,
+        @NonNull String[] permissions,
+        @NonNull int[] grantResults) {
+
+        super.onRequestPermissionsResult(
+                requestCode,
+                permissions,
+                grantResults
+        );
+
+        if (requestCode == REQUEST_PERMISSION) {
+            if (grantResults.length > 0
+                && grantResults[0]
+                == PackageManager.PERMISSION_GRANTED) {
+
+                // :white_check_mark: 権限が取れたことだけ記録する。GPSはまだ開始しない
+                isLocationPermissionGranted = true;
+
+            } else {
+                isLocationPermissionGranted = false;
+            }
+        }
     }
+
 }
