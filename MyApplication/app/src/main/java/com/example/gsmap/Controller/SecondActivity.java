@@ -43,75 +43,81 @@ public class SecondActivity extends AppCompatActivity {
             currentWalkerId = "user001";
         }
 
+        Log.d(
+                "SCORE_PROCESS",
+                "walker_id=" + currentWalkerId
+        );
+
         btnBack.setOnClickListener(v -> finish());
 
-        loadScore();
+        calculateAndDisplayScore();
     }
 
-    private void loadScore() {
-        txtScore.setText("スコア：取得中");
+    private void calculateAndDisplayScore() {
+        txtScore.setText("スコア：計算中");
         txtDistance.setText("累計距離：取得中");
 
         new Thread(() -> {
             try {
-                ScoreApiModel scoreApiModel =
-                        new ScoreApiModel();
-
                 GetLocationModel getLocationModel =
                         new GetLocationModel();
 
                 ScoreProcessor scoreProcessor =
                         new ScoreProcessor();
 
-                ScoreInfo currentScoreInfo =
-                        scoreApiModel.fetchScore(
-                                currentWalkerId
-                        );
+                ScoreApiModel scoreApiModel =
+                        new ScoreApiModel();
 
                 List<RoutePoint> path =
                         getLocationModel.fetchRouteData(
                                 currentWalkerId
                         );
 
-                if (currentScoreInfo == null) {
-                    showLoadError(
-                            "スコア情報を取得できませんでした"
-                    );
-                    return;
-                }
-
                 if (path == null) {
-                    showLoadError(
+                    showError(
                             "移動経路を取得できませんでした"
                     );
                     return;
                 }
 
                 double totalDistance =
-                        scoreProcessor
-                                .calculateTotalDistance(path);
+                        scoreProcessor.calculateTotalDistance(
+                                path
+                        );
 
-                int displayScore =
-                        currentScoreInfo.getScore() == null
-                                ? 0
-                                : currentScoreInfo.getScore();
+                int calculatedScore =
+                        scoreProcessor
+                                .calculateScoreFromTotalDistance(
+                                        totalDistance
+                                );
+
+                ScoreInfo scoreInfo =
+                        new ScoreInfo(
+                                currentWalkerId,
+                                calculatedScore
+                        );
+
+                boolean saveResult =
+                        scoreApiModel.saveScore(scoreInfo);
 
                 Log.d(
-                        "SCORE_DISPLAY",
+                        "SCORE_PROCESS",
                         "walker_id="
                                 + currentWalkerId
-                                + ", score="
-                                + displayScore
                                 + ", routeCount="
                                 + path.size()
                                 + ", totalDistance="
                                 + totalDistance
+                                + ", calculatedScore="
+                                + calculatedScore
+                                + ", saveResult="
+                                + saveResult
                 );
 
                 runOnUiThread(() -> {
                     txtScore.setText(
                             "スコア："
-                                    + displayScore
+                                    + calculatedScore
                                     + "点"
                     );
 
@@ -124,23 +130,30 @@ public class SecondActivity extends AppCompatActivity {
                             )
                                     + "m"
                     );
+
+                    if (!saveResult) {
+                        Log.e(
+                                "SCORE_PROCESS",
+                                "スコアの保存に失敗しました"
+                        );
+                    }
                 });
 
             } catch (Exception e) {
                 Log.e(
-                        "SCORE_DISPLAY",
-                        "スコア表示処理に失敗しました",
+                        "SCORE_PROCESS",
+                        "スコア処理に失敗しました",
                         e
                 );
 
-                showLoadError(
-                        "スコア情報を取得できませんでした"
+                showError(
+                        "スコアを計算できませんでした"
                 );
             }
         }).start();
     }
 
-    private void showLoadError(String message) {
+    private void showError(String message) {
         runOnUiThread(() -> {
             txtScore.setText(message);
             txtDistance.setText(
