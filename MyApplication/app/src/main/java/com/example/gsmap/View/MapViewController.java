@@ -1,6 +1,14 @@
 package com.example.gsmap.View;
 
+
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+
+import androidx.core.content.ContextCompat;
+
+import com.example.gsmap.R;
 
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
@@ -134,6 +142,14 @@ public class MapViewController {
 
         currentMarker.setPosition(point);
         currentMarker.setTitle("現在地");
+
+        Drawable currentIcon =
+                ContextCompat.getDrawable(
+                        context,
+                        R.drawable.pin_red
+                );
+
+        currentMarker.setIcon(currentIcon);
 
         mapView.getOverlays()
                 .add(currentMarker);

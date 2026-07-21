@@ -12,7 +12,7 @@
         android:allowBackup="true"
         android:label="GSI Map"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+        android:theme="@style/Theme.MyApplication"
         android:usesCleartextTraffic="true">
 
         <!-- ログイン画面：アプリ起動時に最初に開く画面 -->
